@@ -39,6 +39,8 @@ import os
 from pathlib import Path
 
 import coloredlogs
+from yaspin import yaspin
+
 from awsenergylabelerlib import (
     ACCOUNT_METRIC_EXPORT_TYPES,
     ACCOUNT_THRESHOLDS,
@@ -61,7 +63,6 @@ from awsenergylabelerlib import (
     validate_account_ids,
     validate_regions,
 )
-from yaspin import yaspin
 
 from ._version import __version__ as cli_version
 from .awsenergylabelercliexceptions import (
@@ -104,9 +105,17 @@ SUPPRESSED_FINDINGS_QUERY = {
 }
 
 
-def resolved_findings_query(x):
+def resolved_findings_query(days):
+    """Create a query filter for resolved findings within the specified number of days.
+
+    Args:
+        days: Number of days to look back for resolved findings.
+
+    Returns:
+        dict: Query filter for Security Hub findings.
+    """
     return {
-        "UpdatedAt": [{"DateRange": {"Value": x, "Unit": "DAYS"}}],
+        "UpdatedAt": [{"DateRange": {"Value": days, "Unit": "DAYS"}}],
         "WorkflowStatus": [{"Value": "RESOLVED", "Comparison": "EQUALS"}],
     }
 
@@ -368,20 +377,8 @@ def validate_metadata_file(file_path, parser):
     )
 
 
-def get_arguments(arguments=None):
-    """
-    Gets us the cli arguments.
-
-    Returns the args as parsed from the argsparser.
-    """
-    parser = get_parser()
-    args = parser.parse_args(arguments)
-    if args.version:
-        parser.exit(0, cli_version)
-    if args.validate_metadata_file:
-        # if overriding argument is set then we do not check any other arguments and we exit straight
-        # after validating the argument
-        validate_metadata_file(args.validate_metadata_file, parser)
+def _validate_mutual_exclusions(args, parser):
+    """Validate mutually exclusive arguments."""
     # Since mutual exclusive cannot work with environment variables we need to check explicitly for all pairs of
     # mutual relations that are not allowed.
     if all([args.allowed_account_ids, args.denied_account_ids]):
@@ -392,11 +389,7 @@ def get_arguments(arguments=None):
         parser.error(
             "argument --allowed-regions/-ar: not allowed with argument --denied-regions/-dr",
         )
-    export_metrics_set = environment_variable_boolean(
-        os.environ.get("AWS_LABELER_EXPORT_ONLY_METRICS"),
-    )
-    if export_metrics_set:
-        args.export_all = False
+
     exclusive_args = [
         args.organizations_zone_name,
         args.audit_zone_name,
@@ -414,6 +407,7 @@ def get_arguments(arguments=None):
             "arguments --organizations-zone-name/-o --audit-zone-name/-z "
             "--single-account-id/-s are mutually exclusive",
         )
+
     exclusive_args = [
         args.allowed_account_ids,
         args.denied_account_ids,
@@ -426,6 +420,10 @@ def get_arguments(arguments=None):
             "arguments --allowed-account-ids/-a --denied-account-ids/-d --single-account-id/-s are "
             "mutually exclusive",
         )
+
+
+def _validate_frameworks_and_ids(args, parser):
+    """Validate frameworks and account/region IDs."""
     try:
         SecurityHub.validate_frameworks(args.frameworks)
     except InvalidFrameworks:
@@ -433,16 +431,44 @@ def get_arguments(arguments=None):
             f"{args.frameworks} are not valid supported security hub frameworks. Currently supported "
             f"are {SecurityHub.frameworks}",
         )
+
     for argument in ["allowed_account_ids", "denied_account_ids"]:
         try:
             _ = validate_account_ids(getattr(args, argument))
         except InvalidAccountListProvided:
             parser.error(f"{getattr(args, argument)} contains invalid account ids.")
+
     for argument in ["allowed_regions", "denied_regions"]:
         try:
             _ = validate_regions(getattr(args, argument))
         except InvalidRegionListProvided:
             parser.error(f"{getattr(args, argument)} contains invalid regions.")
+
+
+def get_arguments(arguments=None):
+    """
+    Gets us the cli arguments.
+
+    Returns the args as parsed from the argsparser.
+    """
+    parser = get_parser()
+    args = parser.parse_args(arguments)
+    if args.version:
+        parser.exit(0, cli_version)
+    if args.validate_metadata_file:
+        # if overriding argument is set then we do not check any other arguments and we exit straight
+        # after validating the argument
+        validate_metadata_file(args.validate_metadata_file, parser)
+
+    export_metrics_set = environment_variable_boolean(
+        os.environ.get("AWS_LABELER_EXPORT_ONLY_METRICS"),
+    )
+    if export_metrics_set:
+        args.export_all = False
+
+    _validate_mutual_exclusions(args, parser)
+    _validate_frameworks_and_ids(args, parser)
+
     if args.export_path and not DestinationPath(args.export_path).is_valid():
         parser.error(
             f"{args.export_path} is an invalid export location. Example --export-path "
