@@ -150,9 +150,9 @@ def get_parser():
                         default=os.environ.get('AWS_LABELER_FRAMEWORKS', DEFAULT_SECURITY_HUB_FRAMEWORKS),
                         type=character_delimited_list_variable,
                         help=f"The list of applicable frameworks: ['{AWS_FOUNDATIONAL_SECURITY_FRAMEWORK}', "
-                             f"'{CIS_AWS_FOUNDATION_FRAMEWORK}', '{PCI_DSS_FRAMEWORK}'], "
-                             f"default={list(DEFAULT_SECURITY_HUB_FRAMEWORKS)}. "
-                             "Setting the flag with an empty string argument will set no frameworks for filters.")
+                        f"'{CIS_AWS_FOUNDATION_FRAMEWORK}', '{PCI_DSS_FRAMEWORK}'], "
+                        f"default={list(DEFAULT_SECURITY_HUB_FRAMEWORKS)}. "
+                        "Setting the flag with an empty string argument will set no frameworks for filters.")
     parser.add_argument('--allowed-account-ids',
                         '-a',
                         action=default_environment_variable('AWS_LABELER_ALLOWED_ACCOUNT_IDS'),
@@ -290,10 +290,10 @@ def validate_metadata_file(file_path, parser):
             LOGGER.debug(f'Received local file "{file_path}" to validate.')
             contents = ifile.read()
             data = json.loads(contents)
-            recorded_hash = data.get('Hash:')
+            recorded_hash = data.get('Hash: ')
             if not recorded_hash:
-                parser.error(f'Local file "{file_path}" does not have a "Hash:" entry!')
-            del data['Hash:']
+                parser.error(f'Local file "{file_path}" does not have a "Hash: " entry!')
+            del data['Hash: ']
             calculated_hash = calculate_file_hash(json.dumps(data).encode('utf-8'))
             if recorded_hash == calculated_hash:
                 parser.exit(0, f'The file {file_path} seems a valid metadata file.')
@@ -357,7 +357,7 @@ def get_arguments(arguments=None):  # noqa: MC0001
             parser.error(f'{getattr(args, argument)} contains invalid regions.')
     if args.export_path and not DestinationPath(args.export_path).is_valid():
         parser.error(f'{args.export_path} is an invalid export location. Example --export-path '
-                     f'/a/directory or --export-path s3://mybucket location')
+                     f'/a/directory or --export-path s3: //mybucket location')
     return args
 
 
@@ -403,7 +403,7 @@ def wait_for_findings(method_name, method_argument, log_level, finding_type=None
     try:
         if all([log_level != 'debug', not disable_spinner]):
             with yaspin(text=f"Please wait while retrieving Security Hub{f' {finding_type} ' if finding_type else ' '}"
-                             f"findings...", color="yellow") as spinner:
+                        f"findings...", color="yellow") as spinner:
                 findings = method_name(method_argument) if method_argument else method_name()
             spinner.ok("✅")
         else:
