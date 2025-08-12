@@ -25,13 +25,13 @@ jobs:
         run: pip install pipenv
 
       - name: Lint
-        run: _CI/scripts/lint.py
+        run: ci/scripts/lint.py
 
       - name: Test
-        run: _CI/scripts/test.py
+        run: ci/scripts/test.py
 
       - name: Build
-        run: _CI/scripts/build.py
+        run: ci/scripts/build.py
 
   release:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
