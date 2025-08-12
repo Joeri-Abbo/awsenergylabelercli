@@ -219,15 +219,15 @@ def report(report_data, to_json=None):
     if to_json is None:
         to_json = False
     if to_json:
-        {
+        json_data = {
             key.replace(":", "").replace(" ", "_").lower(): value
             for key, value in dict(report_data).items()
         }
-        return
+        return json_data
     table_data = [["Energy label report"]]
     table_data.extend(report_data)
-    AsciiTable(table_data)
-    return
+    table = AsciiTable(table_data)
+    return table
 
 
 def main():
