@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: __init__.py
 #
 # Copyright 2018 Costas Tyfoxylos
@@ -22,20 +21,3 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #
-
-from .core_library import (activate_template,
-                           execute_command,
-                           setup_logging,
-                           get_project_root_path,
-                           validate_binary_prerequisites,
-                           validate_environment_variable_prerequisites,
-                           is_venv_created,
-                           load_environment_variables,
-                           load_dot_env_file,
-                           clean_up,
-                           save_requirements,
-                           open_file,
-                           bump,
-                           activate_virtual_environment,
-                           tempdir,
-                           update_pipfile)

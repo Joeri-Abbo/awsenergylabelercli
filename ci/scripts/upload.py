@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: document.py
+# File: upload.py
 #
 # Copyright 2018 Costas Tyfoxylos
 #
@@ -23,45 +22,56 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-import os
 import logging
-import shutil
+import os
 
 # this sets up everything and MUST be included before any third party module in every step
-import _initialize_template
-
-from bootstrap import bootstrap
+from build import build
+from configuration import PREREQUISITES
 from emoji import emojize
-from library import open_file, clean_up, execute_command
+from library import execute_command, validate_environment_variable_prerequisites
 
 # This is the main prefix used for logging
-LOGGER_BASENAME = '''_CI.document'''
+LOGGER_BASENAME = """_CI.upload"""
 LOGGER = logging.getLogger(LOGGER_BASENAME)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def document():
-    bootstrap()
-    clean_up(('_build',
-              os.path.join('docs', '_build'),
-              os.path.join('docs', 'test_docs.rst'),
-              os.path.join('docs', 'modules.rst')))
-    success = execute_command('make -C docs html')
+def upload():
+    success = build()
+    if not success:
+        LOGGER.error("Errors caught on building the artifact, bailing out...")
+        raise SystemExit(1)
+    if not validate_environment_variable_prerequisites(
+        PREREQUISITES.get("upload_environment_variables", []),
+    ):
+        LOGGER.error(
+            "Prerequisite environment variable for upload missing, cannot continue.",
+        )
+        raise SystemExit(1)
+    upload_command = (
+        "twine upload dist/* "
+        f'-u {os.environ.get("PYPI_UPLOAD_USERNAME")} '
+        f'-p {os.environ.get("PYPI_UPLOAD_PASSWORD")} '
+        "--skip-existing "
+        f'--repository-url {os.environ.get("PYPI_URL")}'
+    )
+    LOGGER.info("Trying to upload built artifact...")
+    success = execute_command(upload_command)
     if success:
-        shutil.move(os.path.join('docs', '_build'), '_build')
-        try:
-            open_file(os.path.join('_build', 'html', 'index.html'))
-        except Exception:
-            LOGGER.warning('Could not execute UI portion. Maybe running headless?')
-        LOGGER.info('%s Successfully built documentation %s',
-                    emojize(':check_mark_button:'),
-                    emojize(':thumbs_up:'))
+        LOGGER.info(
+            "%s Successfully uploaded artifact! %s",
+            emojize(":check_mark_button:"),
+            emojize(":thumbs_up:"),
+        )
     else:
-        LOGGER.error('%s Documentation creation errors found! %s',
-                     emojize(':cross_mark:'),
-                     emojize(':crying_face:'))
+        LOGGER.error(
+            "%s Errors found in uploading artifact! %s",
+            emojize(":cross_mark:"),
+            emojize(":crying_face:"),
+        )
     raise SystemExit(0 if success else 1)
 
 
-if __name__ == '__main__':
-    document()
+if __name__ == "__main__":
+    upload()

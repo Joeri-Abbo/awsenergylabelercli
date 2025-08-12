@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: lint.py
+# File: rebuild_pipfile.py
 #
-# Copyright 2018 Costas Tyfoxylos
+# Copyright 2019 Ilija Matoski
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to
@@ -23,35 +22,37 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
+import argparse
 import logging
 
 # this sets up everything and MUST be included before any third party module in every step
-import _initialize_template
-
 from bootstrap import bootstrap
-from emoji import emojize
-from library import execute_command
-
+from library import update_pipfile
 
 # This is the main prefix used for logging
-LOGGER_BASENAME = '''_CI.lint'''
+LOGGER_BASENAME = """_CI.build"""
 LOGGER = logging.getLogger(LOGGER_BASENAME)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def lint():
+def get_arguments():
+    parser = argparse.ArgumentParser(
+        description="Regenerates Pipfile based on Pipfile.lock",
+    )
+    parser.add_argument(
+        "--stdout",
+        help="Output the Pipfile to stdout",
+        action="store_true",
+        default=False,
+    )
+    return parser.parse_args()
+
+
+def execute():
     bootstrap()
-    success = execute_command('prospector -DFM --no-autodetect')
-    if success:
-        LOGGER.info('%s No linting errors found! %s',
-                    emojize(':check_mark_button:'),
-                    emojize(':thumbs_up:'))
-    else:
-        LOGGER.error('%s Linting errors found! %s',
-                     emojize(':cross_mark:'),
-                     emojize(':crying_face:'))
-    raise SystemExit(0 if success else 1)
+    args = get_arguments()
+    return update_pipfile(args.stdout)
 
 
-if __name__ == '__main__':
-    lint()
+if __name__ == "__main__":
+    raise SystemExit(not execute())

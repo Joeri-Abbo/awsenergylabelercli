@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: bootstrap.py
+# File: graph.py
 #
 # Copyright 2018 Costas Tyfoxylos
 #
@@ -23,24 +22,47 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-import os
 import logging
+import os
+from pathlib import Path
 
 # this sets up everything and MUST be included before any third party module in every step
-import _initialize_template
-
-from configuration import LOGGING_LEVEL
-from library import setup_logging
+from bootstrap import bootstrap
+from configuration import PROJECT_SLUG
+from emoji import emojize
+from library import execute_command
 
 # This is the main prefix used for logging
-LOGGER_BASENAME = '''_CI.bootstrap'''
+LOGGER_BASENAME = """_CI.graph"""
 LOGGER = logging.getLogger(LOGGER_BASENAME)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def bootstrap():
-    setup_logging(os.environ.get("LOGGING_LEVEL") or LOGGING_LEVEL)
-
-
-if __name__ == '__main__':
+def graph():
     bootstrap()
+    os.chdir("graphs")
+    create_graph_command = (
+        "pyreverse "
+        "-o png "
+        "-A "
+        "-f PUB_ONLY "
+        f'-p graphs "{Path("..", PROJECT_SLUG)}"'
+    )
+    success = execute_command(create_graph_command)
+    if success:
+        LOGGER.info(
+            "%s Successfully created graph images %s",
+            emojize(":check_mark_button:"),
+            emojize(":thumbs_up:"),
+        )
+    else:
+        LOGGER.error(
+            "%s Errors in creation of graph images found! %s",
+            emojize(":cross_mark:"),
+            emojize(":crying_face:"),
+        )
+    raise SystemExit(0 if success else 1)
+
+
+if __name__ == "__main__":
+    graph()

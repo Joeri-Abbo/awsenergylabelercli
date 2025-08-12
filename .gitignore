@@ -62,3 +62,6 @@ env
 
 # Visual studio code
 .vscode
+
+run.sh
+output

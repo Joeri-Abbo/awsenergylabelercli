@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: build.py
+# File: lint.py
 #
 # Copyright 2018 Costas Tyfoxylos
 #
@@ -23,54 +22,40 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-
 import logging
-import os
-import shutil
 
 # this sets up everything and MUST be included before any third party module in every step
-import _initialize_template
-
 from bootstrap import bootstrap
 from emoji import emojize
-from configuration import BUILD_REQUIRED_FILES, LOGGING_LEVEL, PROJECT_SLUG
-from library import execute_command, clean_up, save_requirements
+from library import execute_command
 
 # This is the main prefix used for logging
-LOGGER_BASENAME = '''_CI.build'''
+LOGGER_BASENAME = """_CI.lint"""
 LOGGER = logging.getLogger(LOGGER_BASENAME)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def build():
+def lint():
     bootstrap()
-    clean_up(('build', 'dist'))
-    success = execute_command('pipenv lock')
+    success_ruff = execute_command("ruff check .")
+    success_pylint = execute_command(
+        "pylint awsenergylabelercli/ aws_energy_labeler_cli.py",
+    )
+    success = success_ruff and success_pylint
     if success:
-        LOGGER.info('Successfully created lock file %s %s',
-                     emojize(':check_mark_button:'),
-                     emojize(':thumbs_up:'))
+        LOGGER.info(
+            "%s No linting errors found! %s",
+            emojize(":check_mark_button:"),
+            emojize(":thumbs_up:"),
+        )
     else:
-        LOGGER.error('%s Errors creating lock file! %s',
-                      emojize(':cross_mark:'),
-                      emojize(':crying_face:'))
-        raise SystemExit(1)
-    save_requirements()
-    for file in BUILD_REQUIRED_FILES:
-        shutil.copy(file, os.path.join(f'{PROJECT_SLUG}', file))
-    success = execute_command('python setup.py sdist')
-    if success:
-        LOGGER.info('%s Successfully built artifact %s',
-                    emojize(':check_mark_button:'),
-                    emojize(':thumbs_up:'))
-    else:
-        LOGGER.error('%s Errors building artifact! %s',
-                     emojize(':cross_mark:'),
-                     emojize(':crying_face:'))
-    clean_up([os.path.join(f'{PROJECT_SLUG}', file)
-              for file in BUILD_REQUIRED_FILES])
-    return True if success else False
+        LOGGER.error(
+            "%s Linting errors found! %s",
+            emojize(":cross_mark:"),
+            emojize(":crying_face:"),
+        )
+    raise SystemExit(0 if success else 1)
 
 
-if __name__ == '__main__':
-    raise SystemExit(0 if build() else 1)
+if __name__ == "__main__":
+    lint()

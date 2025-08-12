@@ -200,3 +200,9 @@ History
 ------------------
 
 * Fix upload mechanism and bump dependency versions.
+
+6.0.0 (12-08-2025)
+------------------
+
+* Update to Python 3.12 and bump dependencies.
+* Introduce ruff for linting.

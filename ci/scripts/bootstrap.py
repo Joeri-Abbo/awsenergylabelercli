@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: __init__.py
+# File: bootstrap.py
 #
 # Copyright 2018 Costas Tyfoxylos
 #
@@ -22,3 +21,23 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #
+
+import logging
+import os
+
+# this sets up everything and MUST be included before any third party module in every step
+from configuration import LOGGING_LEVEL
+from library import setup_logging
+
+# This is the main prefix used for logging
+LOGGER_BASENAME = """_CI.bootstrap"""
+LOGGER = logging.getLogger(LOGGER_BASENAME)
+LOGGER.addHandler(logging.NullHandler())
+
+
+def bootstrap():
+    setup_logging(os.environ.get("LOGGING_LEVEL") or LOGGING_LEVEL)
+
+
+if __name__ == "__main__":
+    bootstrap()

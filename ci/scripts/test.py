@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: graph.py
+# File: test.py
 #
 # Copyright 2018 Costas Tyfoxylos
 #
@@ -23,43 +22,47 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-import os
 import logging
+import os
+from time import sleep
 
 # this sets up everything and MUST be included before any third party module in every step
-import _initialize_template
-
-from pathlib import Path
 from bootstrap import bootstrap
 from emoji import emojize
-from library import execute_command
-from configuration import PROJECT_SLUG
+from library import clean_up, execute_command, open_file, save_requirements
 
 # This is the main prefix used for logging
-LOGGER_BASENAME = '''_CI.graph'''
+LOGGER_BASENAME = """_CI.test"""
 LOGGER = logging.getLogger(LOGGER_BASENAME)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def graph():
+def test():
     bootstrap()
-    os.chdir('graphs')
-    create_graph_command = ('pyreverse '
-                            '-o png '
-                            '-A '
-                            '-f PUB_ONLY '
-                            f'-p graphs \"{Path("..", PROJECT_SLUG)}\"')
-    success = execute_command(create_graph_command)
+    clean_up("test-output")
+    os.mkdir("test-output")
+    save_requirements()
+    success = execute_command("tox")
+    try:
+        open_file(os.path.join("test-output", "coverage", "index.html"))
+        sleep(0.5)
+        open_file(os.path.join("test-output", "nosetests.html"))
+    except Exception:
+        LOGGER.warning("Could not execute UI portion. Maybe running headless?")
     if success:
-        LOGGER.info('%s Successfully created graph images %s',
-                    emojize(':check_mark_button:'),
-                    emojize(':thumbs_up:'))
+        LOGGER.info(
+            "%s No testing errors found! %s",
+            emojize(":check_mark_button:"),
+            emojize(":thumbs_up:"),
+        )
     else:
-        LOGGER.error('%s Errors in creation of graph images found! %s',
-                     emojize(':cross_mark:'),
-                     emojize(':crying_face:'))
+        LOGGER.error(
+            "%s Testing errors found! %s",
+            emojize(":cross_mark:"),
+            emojize(":crying_face:"),
+        )
     raise SystemExit(0 if success else 1)
 
 
-if __name__ == '__main__':
-    graph()
+if __name__ == "__main__":
+    test()

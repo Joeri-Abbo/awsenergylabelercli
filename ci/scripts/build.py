@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: test.py
+# File: build.py
 #
 # Copyright 2018 Costas Tyfoxylos
 #
@@ -23,48 +22,59 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
+
 import logging
 import os
-from time import sleep
+import shutil
 
 # this sets up everything and MUST be included before any third party module in every step
-import _initialize_template
-
-from emoji import emojize
 from bootstrap import bootstrap
-from library import (open_file,
-                     clean_up,
-                     execute_command,
-                     save_requirements)
+from configuration import BUILD_REQUIRED_FILES, PROJECT_SLUG
+from emoji import emojize
+from library import clean_up, execute_command, save_requirements
 
 # This is the main prefix used for logging
-LOGGER_BASENAME = '''_CI.test'''
+LOGGER_BASENAME = """_CI.build"""
 LOGGER = logging.getLogger(LOGGER_BASENAME)
 LOGGER.addHandler(logging.NullHandler())
 
 
-def test():
+def build():
     bootstrap()
-    clean_up('test-output')
-    os.mkdir('test-output')
-    save_requirements()
-    success = execute_command('tox')
-    try:
-        open_file(os.path.join('test-output', 'coverage', 'index.html'))
-        sleep(0.5)
-        open_file(os.path.join('test-output', 'nosetests.html'))
-    except Exception:
-        LOGGER.warning('Could not execute UI portion. Maybe running headless?')
+    clean_up(("build", "dist"))
+    success = execute_command("pipenv lock")
     if success:
-        LOGGER.info('%s No testing errors found! %s',
-                    emojize(':check_mark_button:'),
-                    emojize(':thumbs_up:'))
+        LOGGER.info(
+            "Successfully created lock file %s %s",
+            emojize(":check_mark_button:"),
+            emojize(":thumbs_up:"),
+        )
     else:
-        LOGGER.error('%s Testing errors found! %s',
-                     emojize(':cross_mark:'),
-                     emojize(':crying_face:'))
-    raise SystemExit(0 if success else 1)
+        LOGGER.error(
+            "%s Errors creating lock file! %s",
+            emojize(":cross_mark:"),
+            emojize(":crying_face:"),
+        )
+        raise SystemExit(1)
+    save_requirements()
+    for file in BUILD_REQUIRED_FILES:
+        shutil.copy(file, os.path.join(f"{PROJECT_SLUG}", file))
+    success = execute_command("python setup.py sdist")
+    if success:
+        LOGGER.info(
+            "%s Successfully built artifact %s",
+            emojize(":check_mark_button:"),
+            emojize(":thumbs_up:"),
+        )
+    else:
+        LOGGER.error(
+            "%s Errors building artifact! %s",
+            emojize(":cross_mark:"),
+            emojize(":crying_face:"),
+        )
+    clean_up([os.path.join(f"{PROJECT_SLUG}", file) for file in BUILD_REQUIRED_FILES])
+    return bool(success)
 
 
-if __name__ == '__main__':
-    test()
+if __name__ == "__main__":
+    raise SystemExit(0 if build() else 1)

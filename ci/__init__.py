@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: __init__.py
 #
 # Copyright 2018 Costas Tyfoxylos
@@ -22,10 +21,3 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #
-from .configuration import (LOGGING_LEVEL,
-                            ENVIRONMENT_VARIABLES,
-                            PREREQUISITES,
-                            BUILD_REQUIRED_FILES,
-                            LOGGERS_TO_DISABLE,
-                            BRANCHES_SUPPORTED_FOR_TAG,
-                            PROJECT_SLUG)

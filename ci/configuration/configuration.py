@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: configuration.py
 #
 # Copyright 2018 Costas Tyfoxylos
@@ -22,42 +21,48 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #
-import os
 import json
+import os
 
 current_file_path = os.path.dirname(os.path.abspath(__file__))
-files_path = os.path.abspath(os.path.join(current_file_path, '..', 'files'))
+files_path = os.path.abspath(os.path.join(current_file_path, "..", "files"))
 
-with open(os.path.join(files_path, 'logging_level.json'), 'r') as logging_level_file:
-    LOGGING_LEVEL = json.loads(logging_level_file.read()).get('level').upper()
+with open(os.path.join(files_path, "logging_level.json")) as logging_level_file:
+    LOGGING_LEVEL = json.loads(logging_level_file.read()).get("level").upper()
     logging_level_file.close()
 
-with open(os.path.join(files_path, 'environment_variables.json'), 'r') as environment_variables_file:
+with open(
+    os.path.join(files_path, "environment_variables.json"),
+) as environment_variables_file:
     ENVIRONMENT_VARIABLES = json.loads(environment_variables_file.read())
     environment_variables_file.close()
 
-with open(os.path.join(files_path, 'prerequisites.json'), 'r') as prerequisites_file:
+with open(os.path.join(files_path, "prerequisites.json")) as prerequisites_file:
     PREREQUISITES = json.loads(prerequisites_file.read())
     prerequisites_file.close()
 
-BUILD_REQUIRED_FILES = ('.VERSION',
-                        'LICENSE',
-                        'AUTHORS.rst',
-                        'CONTRIBUTING.rst',
-                        'HISTORY.rst',
-                        'README.rst',
-                        'USAGE.rst',
-                        'Pipfile',
-                        'Pipfile.lock',
-                        'requirements.txt',
-                        'dev-requirements.txt')
+BUILD_REQUIRED_FILES = (
+    ".VERSION",
+    "LICENSE",
+    "AUTHORS.rst",
+    "CONTRIBUTING.rst",
+    "HISTORY.rst",
+    "README.rst",
+    "USAGE.rst",
+    "Pipfile",
+    "Pipfile.lock",
+    "requirements.txt",
+    "dev-requirements.txt",
+)
 
-LOGGERS_TO_DISABLE = ['sh.command',
-                      'sh.command.process',
-                      'sh.command.process.streamreader',
-                      'sh.streamreader',
-                      'sh.stream_bufferer']
+LOGGERS_TO_DISABLE = [
+    "sh.command",
+    "sh.command.process",
+    "sh.command.process.streamreader",
+    "sh.streamreader",
+    "sh.stream_bufferer",
+]
 
-BRANCHES_SUPPORTED_FOR_TAG = ['main']
+BRANCHES_SUPPORTED_FOR_TAG = ["main"]
 
-PROJECT_SLUG = ENVIRONMENT_VARIABLES.get('PROJECT_SLUG')
+PROJECT_SLUG = ENVIRONMENT_VARIABLES.get("PROJECT_SLUG")

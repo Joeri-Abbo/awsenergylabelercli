@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: rebuild_pipfile.py
+# File: document.py
 #
-# Copyright 2019 Ilija Matoski
+# Copyright 2018 Costas Tyfoxylos
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 #  of this software and associated documentation files (the "Software"), to
@@ -24,34 +23,50 @@
 #
 
 import logging
-import argparse
+import os
+import shutil
 
 # this sets up everything and MUST be included before any third party module in every step
-import _initialize_template
-
 from bootstrap import bootstrap
-from library import update_pipfile
+from emoji import emojize
+from library import clean_up, execute_command, open_file
 
 # This is the main prefix used for logging
-LOGGER_BASENAME = '''_CI.build'''
+LOGGER_BASENAME = """_CI.document"""
 LOGGER = logging.getLogger(LOGGER_BASENAME)
 LOGGER.addHandler(logging.NullHandler())
 
-def get_arguments():
-    parser = argparse.ArgumentParser(description='Regenerates Pipfile based on Pipfile.lock')
-    parser.add_argument('--stdout',
-                        help='Output the Pipfile to stdout',
-                        action="store_true",
-                        default=False)
-    args = parser.parse_args()
-    return args
 
-
-def execute():
+def document():
     bootstrap()
-    args = get_arguments()
-    return update_pipfile(args.stdout)
+    clean_up(
+        (
+            "_build",
+            os.path.join("docs", "_build"),
+            os.path.join("docs", "test_docs.rst"),
+            os.path.join("docs", "modules.rst"),
+        ),
+    )
+    success = execute_command("make -C docs html")
+    if success:
+        shutil.move(os.path.join("docs", "_build"), "_build")
+        try:
+            open_file(os.path.join("_build", "html", "index.html"))
+        except Exception:
+            LOGGER.warning("Could not execute UI portion. Maybe running headless?")
+        LOGGER.info(
+            "%s Successfully built documentation %s",
+            emojize(":check_mark_button:"),
+            emojize(":thumbs_up:"),
+        )
+    else:
+        LOGGER.error(
+            "%s Documentation creation errors found! %s",
+            emojize(":cross_mark:"),
+            emojize(":crying_face:"),
+        )
+    raise SystemExit(0 if success else 1)
 
 
-if __name__ == '__main__':
-    raise SystemExit(not execute())
+if __name__ == "__main__":
+    document()
