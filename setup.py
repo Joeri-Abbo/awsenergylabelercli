@@ -17,14 +17,22 @@ except ImportError:
     requirements = [
         line.strip()
         for line in requirements_path.read_text().splitlines()
-        if line.strip() and not line.startswith("#")
+        if line.strip() 
+        and not line.startswith("#")
+        and not line.startswith("-i")
+        and not line.startswith("-f")
+        and not line.startswith("--")
     ]
     # get the test requirements from the test_requirements.txt
     dev_requirements_path = Path("dev-requirements.txt")
     test_requirements = [
         line.strip()
         for line in dev_requirements_path.read_text().splitlines()
-        if line.strip() and not line.startswith("#")
+        if line.strip() 
+        and not line.startswith("#")
+        and not line.startswith("-i")
+        and not line.startswith("-f")
+        and not line.startswith("--")
     ]
 
 readme = Path("README.rst").read_text()
