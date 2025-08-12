@@ -39,8 +39,6 @@ import os
 from pathlib import Path
 
 import coloredlogs
-from yaspin import yaspin
-
 from awsenergylabelerlib import (
     ACCOUNT_METRIC_EXPORT_TYPES,
     ACCOUNT_THRESHOLDS,
@@ -63,6 +61,7 @@ from awsenergylabelerlib import (
     validate_account_ids,
     validate_regions,
 )
+from yaspin import yaspin
 
 from ._version import __version__ as cli_version
 from .awsenergylabelercliexceptions import (
