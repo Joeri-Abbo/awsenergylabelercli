@@ -25,10 +25,12 @@ jobs:
         run: pip install pipenv
 
       - name: Lint
-        run: ci/scripts/lint.py
+        run: |
+          pylint awsenergylabelercli/ aws_energy_labeler_cli.py
+          ruff check . 
 
       - name: Test
-        run: ci/scripts/test.py
+        run: pytest
 
       - name: Build
         run: ci/scripts/build.py
