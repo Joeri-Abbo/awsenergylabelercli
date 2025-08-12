@@ -30,7 +30,7 @@ Manages the version of the package.
 
 """
 
-import os
+from pathlib import Path
 
 __author__ = """Theodoor Scholte <tscholte@schubergphilis.com>"""
 __docformat__ = """google"""
@@ -41,24 +41,11 @@ __maintainer__ = """Theodoor Scholte"""
 __email__ = """<tscholte@schubergphilis.com>"""
 __status__ = """Development"""  # "Prototype", "Development", "Production".
 
-VERSION_FILE_PATH = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        ".VERSION",
-    ),
-)
+VERSION_FILE_PATH = Path(__file__).parent.parent / ".VERSION"
 
-LOCAL_VERSION_FILE_PATH = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__),
-        ".VERSION",
-    ),
-)
+LOCAL_VERSION_FILE_PATH = Path(__file__).parent / ".VERSION"
 
 try:
-    with open(VERSION_FILE_PATH, encoding="utf-8") as f:
-        __version__ = f.read()
+    __version__ = VERSION_FILE_PATH.read_text(encoding="utf-8")
 except OSError:
-    with open(LOCAL_VERSION_FILE_PATH, encoding="utf-8") as f:
-        __version__ = f.read()
+    __version__ = LOCAL_VERSION_FILE_PATH.read_text(encoding="utf-8")

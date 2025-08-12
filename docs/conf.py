@@ -12,9 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
 import sys
+from pathlib import Path
 
+import sphinx.ext.apidoc
 import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another
@@ -24,27 +25,26 @@ import sphinx_rtd_theme
 # sys.path.insert(0, os.path.abspath('.'))
 
 # Get the project root dir, which is the parent dir of this
-cwd = os.getcwd()
-project_root = os.path.dirname(cwd)
+cwd = Path.cwd()
+project_root = cwd.parent
 
 # Run apidoc to traverse the project directory and add all modules to the docs
-import sphinx.ext.apidoc
 
 sphinx.ext.apidoc.main(
     [
         "-f",
         "-o",
-        os.path.join(project_root, "docs"),
-        os.path.join(project_root, "awsenergylabelercli"),
+        str(project_root / "docs"),
+        str(project_root / "awsenergylabelercli"),
     ],
 )
 
 # Insert the project root dir as the first element in the PYTHONPATH.
 # This lets us ensure that the source package is imported, and that its
 # version is used.
-sys.path.insert(0, project_root)
+sys.path.insert(0, str(project_root))
 
-import awsenergylabelercli
+import awsenergylabelercli  # noqa: E402
 
 # -- General configuration ---------------------------------------------
 
@@ -76,7 +76,7 @@ master_doc = "index"
 
 # General information about the project.
 project = """awsenergylabelercli"""
-copyright = """2021, (Author : Theodoor Scholte)"""
+project_copyright = """2021, (Author : Theodoor Scholte)"""
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout

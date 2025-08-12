@@ -36,6 +36,7 @@ import json
 import logging
 import logging.config
 import os
+from pathlib import Path
 
 import coloredlogs
 from awsenergylabelerlib import (
@@ -64,8 +65,8 @@ from yaspin import yaspin
 
 from ._version import __version__ as cli_version
 from .awsenergylabelercliexceptions import (
-    MissingRequiredArguments,
-    MutuallyExclusiveArguments,
+    MissingRequiredArgumentsError,
+    MutuallyExclusiveArgumentsError,
 )
 from .entities import MetadataEntry
 from .validators import (
@@ -102,10 +103,12 @@ SUPPRESSED_FINDINGS_QUERY = {
     "WorkflowStatus": [{"Value": "SUPPRESSED", "Comparison": "EQUALS"}],
 }
 
-RESOLVED_FINDINGS_QUERY = lambda x: {
-    "UpdatedAt": [{"DateRange": {"Value": x, "Unit": "DAYS"}}],
-    "WorkflowStatus": [{"Value": "RESOLVED", "Comparison": "EQUALS"}],
-}
+
+def resolved_findings_query(x):
+    return {
+        "UpdatedAt": [{"DateRange": {"Value": x, "Unit": "DAYS"}}],
+        "WorkflowStatus": [{"Value": "RESOLVED", "Comparison": "EQUALS"}],
+    }
 
 
 def get_parser():
@@ -229,7 +232,7 @@ def get_parser():
         "-j",
         action="store_true",
         default=environment_variable_boolean(
-            os.environ.get("AWS_LABELER_TO_JSON", False),
+            os.environ.get("AWS_LABELER_TO_JSON", "False"),
         ),
         help="Return the report in json format.",
     )
@@ -248,7 +251,7 @@ def get_parser():
         "-rs",
         action="store_true",
         default=environment_variable_boolean(
-            os.environ.get("AWS_LABELER_REPORT_SUPPRESSED_FINDINGS", False),
+            os.environ.get("AWS_LABELER_REPORT_SUPPRESSED_FINDINGS", "False"),
         ),
         help="If set the report will contain info on the number of suppressed findings",
     )
@@ -284,7 +287,7 @@ def get_parser():
         "-ds",
         action="store_true",
         default=environment_variable_boolean(
-            os.environ.get("AWS_LABELER_DISABLE_SPINNER", False),
+            os.environ.get("AWS_LABELER_DISABLE_SPINNER", "False"),
         ),
         help="If set spinner will be disabled on the CLI.",
     )
@@ -293,7 +296,7 @@ def get_parser():
         "-db",
         action="store_true",
         default=environment_variable_boolean(
-            os.environ.get("AWS_LABELER_DISABLE_BANNER", False),
+            os.environ.get("AWS_LABELER_DISABLE_BANNER", "False"),
         ),
         help="If set banner will be disabled on the CLI.",
     )
@@ -347,17 +350,17 @@ def validate_metadata_file(file_path, parser):
 
     """
     try:
-        with open(file_path, encoding="utf-8") as ifile:
-            LOGGER.debug(f'Received local file "{file_path}" to validate.')
-            contents = ifile.read()
-            data = json.loads(contents)
-            recorded_hash = data.get("Hash:")
-            if not recorded_hash:
-                parser.error(f'Local file "{file_path}" does not have a "Hash:" entry!')
-            del data["Hash:"]
-            calculated_hash = calculate_file_hash(json.dumps(data).encode("utf-8"))
-            if recorded_hash == calculated_hash:
-                parser.exit(0, f"The file {file_path} seems a valid metadata file.")
+        file_path_obj = Path(file_path)
+        contents = file_path_obj.read_text(encoding="utf-8")
+        LOGGER.debug("Received local file %s to validate.", file_path)
+        data = json.loads(contents)
+        recorded_hash = data.get("Hash:")
+        if not recorded_hash:
+            parser.error(f'Local file "{file_path}" does not have a "Hash:" entry!')
+        del data["Hash:"]
+        calculated_hash = calculate_file_hash(json.dumps(data).encode("utf-8"))
+        if recorded_hash == calculated_hash:
+            parser.exit(0, f"The file {file_path} seems a valid metadata file.")
     except (ValueError, AttributeError):
         parser.error(f'Local file "{file_path}" provided is not a valid json file!')
     parser.error(
@@ -401,12 +404,12 @@ def get_arguments(arguments=None):
     ]
     try:
         _ = get_mutually_exclusive_args(*exclusive_args, required=True)
-    except MissingRequiredArguments:
+    except MissingRequiredArgumentsError:
         parser.error(
             "one of the arguments --organizations-zone-name/-o --audit-zone-name/-z "
             "--single-account-id/-s is required",
         )
-    except MutuallyExclusiveArguments:
+    except MutuallyExclusiveArgumentsError:
         parser.error(
             "arguments --organizations-zone-name/-o --audit-zone-name/-z "
             "--single-account-id/-s are mutually exclusive",
@@ -418,7 +421,7 @@ def get_arguments(arguments=None):
     ]
     try:
         _ = get_mutually_exclusive_args(*exclusive_args)
-    except MutuallyExclusiveArguments:
+    except MutuallyExclusiveArgumentsError:
         parser.error(
             "arguments --allowed-account-ids/-a --denied-account-ids/-d --single-account-id/-s are "
             "mutually exclusive",
@@ -460,9 +463,9 @@ def setup_logging(level, config_file=None):
     # If there's no config file, logging will default to stdout.
     if config_file:
         try:
-            with open(config_file, encoding="utf-8") as conf_file:
-                configuration = json.loads(conf_file.read())
-                logging.config.dictConfig(configuration)
+            config_file_path = Path(config_file)
+            configuration = json.loads(config_file_path.read_text(encoding="utf-8"))
+            logging.config.dictConfig(configuration)
         except ValueError:
             raise SystemExit(1) from None
         except FileNotFoundError:
@@ -476,7 +479,7 @@ def wait_for_findings(
     method_argument,
     log_level,
     finding_type=None,
-    disable_spinner=False,
+    disable_spinner=None,
 ):
     """If log level is not debug shows a spinner while the callable provided gets security hub findings.
 
@@ -491,6 +494,8 @@ def wait_for_findings(
         findings: A list of security hub findings as retrieved by the callable.
 
     """
+    if disable_spinner is None:
+        disable_spinner = False
     try:
         if all([log_level != "debug", not disable_spinner]):
             with yaspin(
@@ -506,8 +511,8 @@ def wait_for_findings(
             findings = (
                 method_name(method_argument) if method_argument else method_name()
             )
-    except Exception as msg:
-        LOGGER.exception(msg)
+    except Exception:
+        LOGGER.exception("An error occurred")
         raise SystemExit(1) from None
     return findings
 
@@ -596,7 +601,7 @@ def get_zone_reporting_data(
         )
     if report_closed_findings_days:
         LOGGER.warning("Reporting on resolved findings is not functional yet.")
-        # query_filter = labeler.security_hub.calculate_query_filter(RESOLVED_FINDINGS_QUERY(
+        # query_filter = labeler.security_hub.calculate_query_filter(resolved_findings_query(
         #                                                                report_closed_findings_days),
         #                                                            allowed_account_ids=allowed_account_ids,
         #                                                            denied_account_ids=denied_account_ids,
@@ -727,7 +732,7 @@ def get_account_reporting_data(
     ]
     if report_closed_findings_days:
         LOGGER.warning("Reporting on resolved findings is not functional yet.")
-        # query_filter = SecurityHub.calculate_query_filter(RESOLVED_FINDINGS_QUERY(report_closed_findings_days),
+        # query_filter = SecurityHub.calculate_query_filter(resolved_findings_query(report_closed_findings_days),
         #                                                   allowed_account_ids=[account_id],
         #                                                   denied_account_ids=None,
         #                                                   frameworks=frameworks)

@@ -50,8 +50,8 @@ from awsenergylabelerlib.schemas import (
 from schema import SchemaError, SchemaUnexpectedTypeError
 
 from .awsenergylabelercliexceptions import (
-    MissingRequiredArguments,
-    MutuallyExclusiveArguments,
+    MissingRequiredArgumentsError,
+    MutuallyExclusiveArgumentsError,
 )
 
 __author__ = """Costas Tyfoxylos <ctyfoxylos@schubergphilis.com>"""
@@ -140,9 +140,9 @@ def get_mutually_exclusive_args(*args, required=False):
     """Test if multiple mutually exclusive arguments are provided."""
     set_arguments = [arg for arg in args if arg]
     if len(set_arguments) > 1:
-        raise MutuallyExclusiveArguments(*set_arguments)
+        raise MutuallyExclusiveArgumentsError(*set_arguments)
     if required and not any(set_arguments):
-        raise MissingRequiredArguments
+        raise MissingRequiredArgumentsError
     return args
 
 
@@ -167,7 +167,7 @@ def default_environment_variable(variable_name):
                 kwargs["required"] = False
             super().__init__(*args, **kwargs)
 
-        def __call__(self, parser, namespace, values, option_string=None):
+        def __call__(self, _parser, namespace, values, _option_string=None):
             setattr(namespace, self.dest, values)
 
     return DefaultEnvVar
@@ -237,16 +237,18 @@ def zone_thresholds_config(value):
 class OverridingArgument(argparse.Action):
     """Argument that if set will disable all other arguments that are set as required."""
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser, namespace, values, _option_string=None):
         # If we get here, it means that the argument is set so any other argument that has been configured as required
         # will have it's required attribute disabled due to this overriding argument being called.
-        for argument in parser._actions:  # noqa
+        for argument in parser._actions:  # noqa: SLF001
             if argument.required:
                 # this will not log as the logger is set up up after the parsing of arguments. Message is left as
                 # documentation and can be turned into a print statement for debugging.
                 LOGGER.info(
-                    f"Argument {argument.dest} is required, overriding that to not required due to argument "
-                    f"{self.dest} set as overriding argument which will disable all other required arguments.",
+                    "Argument %s is required, overriding that to not required due to argument "
+                    "%s set as overriding argument which will disable all other required arguments.",
+                    argument.dest,
+                    self.dest,
                 )
                 argument.required = False
         # if we get here there has been an argument provided so to support flag arguments if no actual value has been

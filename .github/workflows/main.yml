@@ -31,7 +31,7 @@ jobs:
           pip install pylint ruff
 
       - name: Run Ruff linter
-        run: ruff check . --exclude ci/
+        run: ruff check . 
 
       - name: Run Pylint
         run: pylint awsenergylabelercli/ aws_energy_labeler_cli.py

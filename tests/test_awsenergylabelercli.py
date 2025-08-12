@@ -195,7 +195,8 @@ class TestValidators(unittest.TestCase):
         """
         assert positive_integer("1") == 1
         assert positive_integer(1) == 1
-        assert positive_integer("14") == 14
+        test_value = 14
+        assert positive_integer("14") == test_value
 
     def test_positive_integer_invalid_value(self):
         pytest.raises(argparse.ArgumentTypeError, positive_integer, "a")

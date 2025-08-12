@@ -75,7 +75,7 @@ class Metadata:
         """
         if not isinstance(entry, MetadataEntry):
             msg = "Only MetadataEntry objects are allowed."
-            raise ValueError(msg)
+            raise TypeError(msg)
         self._data.append(entry)
 
     @property

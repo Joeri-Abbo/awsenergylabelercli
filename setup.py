@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from pathlib import Path
+
 from setuptools import find_packages, setup
 
 try:
@@ -11,21 +13,23 @@ try:
     test_requirements = convert_deps_to_pip(pfile["dev-packages"], r=False)
 except ImportError:
     # get the requirements from the requirements.txt
+    requirements_path = Path("requirements.txt")
     requirements = [
         line.strip()
-        for line in open("requirements.txt")
+        for line in requirements_path.read_text().splitlines()
         if line.strip() and not line.startswith("#")
     ]
     # get the test requirements from the test_requirements.txt
+    dev_requirements_path = Path("dev-requirements.txt")
     test_requirements = [
         line.strip()
-        for line in open("dev-requirements.txt")
+        for line in dev_requirements_path.read_text().splitlines()
         if line.strip() and not line.startswith("#")
     ]
 
-readme = open("README.rst").read()
-history = open("HISTORY.rst").read().replace(".. :changelog:", "")
-version = open(".VERSION").read()
+readme = Path("README.rst").read_text()
+history = Path("HISTORY.rst").read_text().replace(".. :changelog:", "")
+version = Path(".VERSION").read_text()
 
 
 setup(

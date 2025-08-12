@@ -137,7 +137,9 @@ def create_execution_metadata(args):
         )
     metadata.add_entry(
         MetadataEntry(
-            title="Library Version:", value=lib_version, is_report_entry=True
+            title="Library Version:",
+            value=lib_version,
+            is_report_entry=True,
         ),
     )
     metadata.add_entry(
@@ -147,7 +149,7 @@ def create_execution_metadata(args):
 
 
 def _get_reporting_arguments(args):
-    start_run_time = datetime.datetime.now()
+    start_run_time = datetime.datetime.now(datetime.UTC)
     execution_metadata = create_execution_metadata(args)
     method_arguments = {
         "region": args.region,
@@ -184,7 +186,7 @@ def _get_reporting_arguments(args):
     report_data, exporter_arguments = get_reporting_data(**method_arguments)
     execution_metadata = exporter_arguments.get("metadata")
     report_data.extend(execution_metadata.report_table)
-    end_run_time = datetime.datetime.now()
+    end_run_time = datetime.datetime.now(datetime.UTC)
     execution_metadata.add_entry(
         MetadataEntry(
             title="Date and time of end of execution:",
@@ -212,8 +214,10 @@ def _get_reporting_arguments(args):
     return report_data, exporter_arguments
 
 
-def report(report_data, to_json=False):
+def report(report_data, to_json=None):
     """Report to table or json."""
+    if to_json is None:
+        to_json = False
     if to_json:
         {
             key.replace(":", "").replace(" ", "_").lower(): value
@@ -234,8 +238,9 @@ def main():
     for entity in ["account", "zone"]:
         if getattr(args, f"{entity}_thresholds"):
             LOGGER.warning(
-                f"{entity.capitalize()} thresholds have been overwritten, "
-                f"configuration will be reported on the output.",
+                "%s thresholds have been overwritten, "
+                "configuration will be reported on the output.",
+                entity.capitalize(),
             )
     if not args.frameworks:
         LOGGER.info("No frameworks have been provided for filtering.")
@@ -245,14 +250,15 @@ def main():
         report_data, exporter_arguments = _get_reporting_arguments(args)
         if args.export_path:
             LOGGER.info(
-                f"Trying to export data to the requested path: {args.export_path}",
+                "Trying to export data to the requested path: %s",
+                args.export_path,
             )
             exporter = DataExporter(**exporter_arguments)
             exporter.export(args.export_path)
         report(report_data, args.to_json)
         status_code = 0
-    except Exception as msg:  # pylint: disable=broad-except
-        LOGGER.exception(msg)
+    except Exception:  # pylint: disable=broad-except
+        LOGGER.exception("An error occurred")
         status_code = 1
     return status_code
 

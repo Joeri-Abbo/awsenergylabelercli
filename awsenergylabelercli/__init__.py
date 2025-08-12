@@ -50,11 +50,11 @@ __email__ = """<tscholte@schubergphilis.com>"""
 __status__ = """Development"""  # "Prototype", "Development", "Production".
 
 # This is to 'use' the module(s), so lint doesn't complain
-assert __version__
+_ = __version__
 
-assert calculate_file_hash
-assert get_account_reporting_data
-assert get_arguments
-assert get_parser
-assert get_zone_reporting_data
-assert setup_logging
+_ = calculate_file_hash
+_ = get_account_reporting_data
+_ = get_arguments
+_ = get_parser
+_ = get_zone_reporting_data
+_ = setup_logging
