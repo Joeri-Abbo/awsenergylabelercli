@@ -21,7 +21,7 @@ emoji = ">=2.0,<3.0"
 [packages]
 coloredlogs = ">=15.0,<16.0"
 awsenergylabelerlib = ">=5.0,<6.0"
-yaspin = ">=2.1.0,<3.0"
+yaspin = ">=2.1.0,<4.0"
 terminaltables = ">=3.1.0,<4.0"
 art = ">=5.3,<6.0"
 pipenv = "*"
