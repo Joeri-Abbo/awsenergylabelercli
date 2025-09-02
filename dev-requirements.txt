@@ -1,5 +1,5 @@
 -i https://pypi.python.org/simple
-alabaster==0.7.16; python_version >= '3.9'
+alabaster==1.0.0; python_version >= '3.9'
 astroid==3.3.11; python_full_version >= '3.9.0'
 babel==2.17.0; python_version >= '3.8'
 cachetools==6.2.0; python_version >= '3.9'
