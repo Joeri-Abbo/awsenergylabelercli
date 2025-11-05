@@ -214,10 +214,11 @@ def _get_reporting_arguments(args):
     return report_data, exporter_arguments
 
 
-def report(report_data, to_json=None):
+def report(report_data, to_json=True):
     """Report to table or json."""
     if to_json is None:
         to_json = False
+    to_json = True
     if to_json:
         json_data = {
             key.replace(":", "").replace(" ", "_").lower(): value
@@ -257,8 +258,8 @@ def main():
             exporter.export(args.export_path)
         report(report_data, args.to_json)
         status_code = 0
-    except Exception:  # pylint: disable=broad-except
-        LOGGER.exception("An error occurred")
+    except Exception as e:  # pylint: disable=broad-except
+        LOGGER.exception("An error occurred: %s", e)
         status_code = 1
     return status_code
 

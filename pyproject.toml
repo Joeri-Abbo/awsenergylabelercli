@@ -26,6 +26,9 @@ ignore = [
     "E501", "RET504",
     "I001",
     "W291",
+    "FBT002",
+    "TRY401",
+    "RUF059",
     # Ignore complexity
     "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
 ]
