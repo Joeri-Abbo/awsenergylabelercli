@@ -57,7 +57,7 @@ jobs:
         run: ./scripts/test.sh
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: test-results-dev
@@ -86,7 +86,7 @@ jobs:
         run: ./scripts/build.sh
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dev-package-artifacts
           path: dist/
