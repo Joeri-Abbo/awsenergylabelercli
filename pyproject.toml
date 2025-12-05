@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 line-length = 88
 indent-width = 4
 
-# Assume Python 3.12
+# Assume Python 3.14
 target-version = "py312"
 
 # Exclude old CI directory during migration
